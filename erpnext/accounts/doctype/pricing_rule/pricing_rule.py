@@ -117,18 +117,19 @@ def apply_pricing_rule(args):
 		args_copy = copy.deepcopy(args)
 		args_copy.update(item)
 		out.append(get_pricing_rule_for_item(args_copy))
-		if set_serial_nos_based_on_fifo:
+		if set_serial_nos_based_on_fifo and not args.get('is_return'):
 			out.append(get_serial_no_for_item(args_copy))
 	return out
 	
 def get_serial_no_for_item(args):
 	from erpnext.stock.get_item_details import get_serial_no
+
 	item_details = frappe._dict({
 		"doctype": args.doctype,
 		"name": args.name,
 		"serial_no": args.serial_no
 	})
-	if args.get("parenttype") in ("Sales Invoice", "Delivery Note"):
+	if args.get("parenttype") in ("Sales Invoice", "Delivery Note") and args.stock_qty > 0:
 		item_details.serial_no = get_serial_no(args)
 	return item_details
 

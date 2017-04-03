@@ -50,7 +50,7 @@ class Company(Document):
 	def validate_default_accounts(self):
 		for field in ["default_bank_account", "default_cash_account", "default_receivable_account", "default_payable_account",
 			"default_expense_account", "default_income_account", "stock_received_but_not_billed",
-			"stock_adjustment_account", "expenses_included_in_valuation"]:
+			"stock_adjustment_account", "expenses_included_in_valuation", "default_payroll_payable_account"]:
 				if self.get(field):
 					for_company = frappe.db.get_value("Account", self.get(field), "company")
 					if for_company != self.name:
@@ -123,7 +123,7 @@ class Company(Document):
 			{"company": self.name, "account_type": "Receivable", "is_group": 0}))
 		frappe.db.set(self, "default_payable_account", frappe.db.get_value("Account",
 			{"company": self.name, "account_type": "Payable", "is_group": 0}))
-			
+
 	def validate_coa_input(self):
 		if self.create_chart_of_accounts_based_on == "Existing Company":
 			self.chart_of_accounts = None
@@ -153,6 +153,8 @@ class Company(Document):
 			self.db_set("default_income_account", frappe.db.get_value("Account",
 				{"account_name": _("Sales"), "company": self.name}))
 
+		if not self.default_payable_account:
+			self.db_set("default_payable_account", self.default_payable_account)
 
 	def _set_default_account(self, fieldname, account_type):
 		if self.get(fieldname):
@@ -292,7 +294,3 @@ def get_name_with_abbr(name, company):
 		parts.append(company_abbr)
 
 	return " - ".join(parts)
-
-def get_company_currency(company):
-	return frappe.local_cache("company_currency", company,
-		lambda: frappe.db.get_value("Company", company, "default_currency"))
